@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ekologi-Untan app</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: #f0f8ff;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        header img {
+            max-width: 400px;
+            height: auto;
+        }
+        h1 {
+            color: #2e8b57;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        input[type="number"] {
+            width: 100px;
+            padding: 5px;
+            margin-top: 5px;
+        }
+        button {
+            margin-top: 20px;
+            background-color: #2e8b57;
+            color: white;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #246b45;
+        }
+        .hasil {
+            margin-top: 25px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 0 5px #aaa;
+        }
+        code {
+            background-color: #eef;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .note {
+            font-size: 14px;
+            color: #555;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <img src="https://i.ibb.co/7zxqpzr/ecology-untan-logo.png" alt="Logo Ecology Untan" />
+        <h1>Ekologi-Untan app</h1>
+        <p>Aplikasi untuk kalkulasi Indeks Shannon-Wiener, Indeks Simpson, Indeks Kemerataan Pielou, dan uji t-Hutchinson.</p>
+    </header>
+
+    <section>
+        <label for="data1">Masukkan data keanekaragaman jenis (contoh format: jumlah individu tiap jenis dipisah koma, misal:<br> 10,5,8,12,15)</label>
+        <textarea id="data1" placeholder="Masukkan data komunitas 1"></textarea>
+
+        <label for="data2">Untuk uji t-Hutchinson, masukkan data komunitas ke-2 (format sama), kosongkan jika tidak digunakan:</label>
+        <textarea id="data2" placeholder="Masukkan data komunitas 2 (opsional)"></textarea>
+
+        <button onclick="hitungIndeks()">Hitung Indeks</button>
+    </section>
+
+    <section class="hasil" id="hasil"></section>
+
+    <script>
+        // Fungsi untuk membersihkan dan mengubah input string menjadi array angka
+        function parsingData(input) {
+            return input.split(',')
+                .map(s => s.trim())
+                .filter(s => s !== '')
+                .map(Number)
+                .filter(num => !isNaN(num) && num > 0);
+        }
+
+        // Fungsi hitung Indeks Shannon-Wiener
+        function indeksShannonWiener(arr) {
+            const N = arr.reduce((a,b) => a+b, 0);
+            const hasil = arr.reduce((acc, n) => {
+                const p = n / N;
+                return acc - p * Math.log(p);
+            }, 0);
+            return hasil;
+        }
+
+        // Fungsi hitung Indeks Simpson (1 - D)
+        function indeksSimpson(arr) {
+            const N = arr.reduce((a,b) => a+b, 0);
+            const D = arr.reduce((acc, n) => acc + (n * (n-1)), 0) / (N * (N-1));
+            return 1 - D;
+        }
+
+        // Fungsi hitung Indeks Kemerataan Pielou (J)
+        function indeksKemerataan(arr) {
+            const S = arr.length;
+            const H = indeksShannonWiener(arr);
+            return H / Math.log(S);
+        }
+
+        // Uji t-Hutchinson untuk perbandingan dua indeks Shannon-Wiener
+        // Menggunakan formula dari Hutchinson & MacArthur (pseudocode)
+        // t = (H1 - H2) / sqrt(VarH1 + VarH2)
+        // Perhitungan varians diasumsikan dengan rumus tertentu (simplifikasi)
+        function tHutchinson(arr1, arr2) {
+            function varH(arr) {
+                const N = arr.reduce((a,b) => a+b, 0);
+                let sum = 0;
+                for (let i = 0; i < arr.length; i++) {
+                    if(arr[i] === 0) continue;
+                    let p = arr[i] / N;
+                    sum += arr[i] * Math.pow(Math.log(p) + indeksShannonWiener(arr), 2);
+                }
+                return sum / (N * N);
+            }
+
+            const H1 = indeksShannonWiener(arr1);
+            const H2 = indeksShannonWiener(arr2);
+            const var1 = varH(arr1);
+            const var2 = varH(arr2);
+
+            const tvalue = (H1 - H2) / Math.sqrt(var1 + var2);
+            return { tvalue, H1, H2, var1, var2 };
+        }
+
+        function formatNumber(num) {
+            return num.toFixed(4);
+        }
+
+        function hitungIndeks() {
+            const data1 = document.getElementById('data1').value;
+            const data2 = document.getElementById('data2').value;
+            const arr1 = parsingData(data1);
+            const arr2 = parsingData(data2);
+
+            const hasilEl = document.getElementById('hasil');
+            hasilEl.innerHTML = '';
+
+            if (arr1.length === 0) {
+                hasilEl.innerHTML = `<p style="color:red;">Data komunitas 1 tidak valid atau kosong.</p>`;
+                return;
+            }
+
+            // Hitung indeks untuk komunitas 1
+            const H1 = indeksShannonWiener(arr1);
+            const S1 = arr1.length;
+            const D1 = indeksSimpson(arr1);
+            const J1 = indeksKemerataan(arr1);
+
+            let hasilHTML = `<h3>Hasil Kalkulasi Komunitas 1</h3>`;
+            hasilHTML += `<ul>
+                <li>Indeks Shannon-Wiener (H'): <b>${formatNumber(H1)}</b></li>
+                <li>Indeks Simpson (1 - D): <b>${formatNumber(D1)}</b></li>
+                <li>Indeks Kemerataan Pielou (J'): <b>${formatNumber(J1)}</b></li>
+                <li>Jumlah Jenis (S): <b>${S1}</b></li>
+            </ul>`;
+
+            // Jika data komunitas 2 diisi, lakukan kalkulasi dan uji t-Hutchinson
+            if(arr2.length > 0) {
+                const H2 = indeksShannonWiener(arr2);
+                const S2 = arr2.length;
+                const D2 = indeksSimpson(arr2);
+                const J2 = indeksKemerataan(arr2);
+
+                hasilHTML += `<h3>Hasil Kalkulasi Komunitas 2</h3>`;
+                hasilHTML += `<ul>
+                    <li>Indeks Shannon-Wiener (H'): <b>${formatNumber(H2)}</b></li>
+                    <li>Indeks Simpson (1 - D): <b>${formatNumber(D2)}</b></li>
+                    <li>Indeks Kemerataan Pielou (J'): <b>${formatNumber(J2)}</b></li>
+                    <li>Jumlah Jenis (S): <b>${S2}</b></li>
+                </ul>`;
+
+                // Uji t-Hutchinson untuk H
+                const {tvalue} = tHutchinson(arr1, arr2);
+
+                hasilHTML += `<h3>Uji t-Hutchinson untuk Indeks Shannon-Wiener (H')</h3>`;
+                hasilHTML += `<p>Nilai t: <b>${formatNumber(tvalue)}</b></p>`;
+                hasilHTML += `<p><i>Catatan:</i> Nilai t ini dapat digunakan untuk uji signifikansi perbedaan H pada tingkat kepercayaan tertentu (dengan df = S1 + S2 - 2).</p>`;
+            }
+
+            hasilEl.innerHTML = hasilHTML;
+        }
+    </script>
+</body>
+</html>
