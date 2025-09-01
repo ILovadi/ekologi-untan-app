@@ -71,17 +71,25 @@
             color: #555;
             margin-top: 5px;
         }
+        footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 0.9em;
+            color: #555;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <header>
-        <img src="logo.png" alt="" />
+        <img src="logo.png" alt="Logo Ekologi-UNTAN-app" />
         <h1>Ekologi-Untan app</h1>
-        <p>Aplikasi untuk kalkulasi Indeks Shannon-Wiener (H'), Indeks Simpson (1-D), Indeks Brillouin (HB), Indeks Kemerataan Pielou (J'), dan uji t-Hutchinson.</p>
+        <p>Aplikasi untuk kalkulasi Indeks Shannon-Wiener, Indeks Simpson, Indeks Dominansi (D), Indeks Brillouin, Indeks Kemerataan Pielou, dan uji t-Hutchinson.</p>
     </header>
 
     <section>
-        <label for="data1">Masukkan data jumlah individu dari setiap jenis (contoh format: jumlah individu setiap jenis dipisah koma, misal:<br> 7,5,15,11,18)</label>
+        <label for="data1">Masukkan data keanekaragaman jenis (contoh format: jumlah individu tiap jenis dipisah koma, misal:<br> 10,5,8,12,15)</label>
         <textarea id="data1" placeholder="Masukkan data komunitas 1"></textarea>
 
         <label for="data2">Untuk uji t-Hutchinson, masukkan data komunitas ke-2 (format sama), kosongkan jika tidak digunakan:</label>
@@ -102,9 +110,9 @@
                 .filter(num => !isNaN(num) && num > 0);
         }
 
-        // Fungsi hitung Indeks Shannon-Wiener
+        // Fungsi hitung Indeks Shannon-Wiener (H')
         function indeksShannonWiener(arr) {
-            const N = arr.reduce((a,b) => a+b, 0);
+            const N = arr.reduce((a, b) => a + b, 0);
             const hasil = arr.reduce((acc, n) => {
                 const p = n / N;
                 return acc - p * Math.log(p);
@@ -112,14 +120,14 @@
             return hasil;
         }
 
-        // Fungsi hitung Indeks Simpson (1 - D)
-        function indeksSimpson(arr) {
-            const N = arr.reduce((a,b) => a+b, 0);
-            const D = arr.reduce((acc, n) => acc + (n * (n-1)), 0) / (N * (N-1));
-            return 1 - D;
+        // Fungsi hitung Indeks Dominansi Simpson (D)
+        function indeksDominansiSimpson(arr) {
+            const N = arr.reduce((a, b) => a + b, 0);
+            const D = arr.reduce((acc, n) => acc + (n * (n - 1)), 0) / (N * (N - 1));
+            return D;
         }
 
-         // Fungsi hitung Indeks Brillouin (B)
+        // Fungsi hitung Indeks Brillouin (B)
         function indeksBrillouin(arr) {
             const N = arr.reduce((a, b) => a + b, 0);
             const S = arr.length;
@@ -138,8 +146,8 @@
 
             return (logFactN / N) - (sumNiLogNi / N);
         }
-            
-            // Fungsi hitung Indeks Kemerataan Pielou (J)
+
+        // Fungsi hitung Indeks Kemerataan Pielou (J')
         function indeksKemerataan(arr) {
             const S = arr.length;
             const H = indeksShannonWiener(arr);
@@ -147,16 +155,13 @@
         }
 
         // Uji t-Hutchinson untuk perbandingan dua indeks Shannon-Wiener
-        // Menggunakan formula dari Hutchinson & MacArthur (pseudocode)
-        // t = (H1 - H2) / sqrt(VarH1 + VarH2)
-        // Perhitungan varians diasumsikan dengan rumus tertentu (simplifikasi)
         function tHutchinson(arr1, arr2) {
             function varH(arr) {
-                const N = arr.reduce((a,b) => a+b, 0);
+                const N = arr.reduce((a, b) => a + b, 0);
                 let sum = 0;
                 for (let i = 0; i < arr.length; i++) {
-                    if(arr[i] === 0) continue;
-                    let p = arr[i] / N;
+                    if (arr[i] === 0) continue;
+                    const p = arr[i] / N;
                     sum += arr[i] * Math.pow(Math.log(p) + indeksShannonWiener(arr), 2);
                 }
                 return sum / (N * N);
@@ -207,13 +212,14 @@
             </ul>`;
 
             // Jika data komunitas 2 diisi, lakukan kalkulasi dan uji t-Hutchinson
-            if(arr2.length > 0) {
+            if (arr2.length > 0) {
                 const H2 = indeksShannonWiener(arr2);
+                const D2 = indeksDominansiSimpson(arr2);
+                const B2 = indeksBrillouin(arr2);
                 const S2 = arr2.length;
-                const D2 = indeksSimpson(arr2);
                 const J2 = indeksKemerataan(arr2);
 
-               hasilHTML += `<h3>Hasil Kalkulasi Komunitas 2</h3>`;
+                hasilHTML += `<h3>Hasil Kalkulasi Komunitas 2</h3>`;
                 hasilHTML += `<ul>
                     <li>Indeks Shannon-Wiener (H'): <b>${formatNumber(H2)}</b></li>
                     <li>Indeks Dominansi Simpson (D): <b>${formatNumber(D2)}</b></li>
@@ -223,7 +229,7 @@
                 </ul>`;
 
                 // Uji t-Hutchinson untuk H
-                const {tvalue} = tHutchinson(arr1, arr2);
+                const { tvalue } = tHutchinson(arr1, arr2);
 
                 hasilHTML += `<h3>Uji t-Hutchinson untuk Indeks Shannon-Wiener (H')</h3>`;
                 hasilHTML += `<p>Nilai t: <b>${formatNumber(tvalue)}</b></p>`;
@@ -233,10 +239,10 @@
             hasilEl.innerHTML = hasilHTML;
         }
     </script>
-    
-  <!-- Sitasi APA 7th -->
+
+    <!-- Sitasi APA 7th -->
     <footer>
-        Sitasi: Lovadi, I. (2025). <i>Ekologi-UNTAN-app (Versi 1.0)</i>. https://ilovadi.github.io/ekologi-untan-app/
+        Sitasi: Lovadi, I. (2025). <em>Ekologi-Untan-app</em>. https://ilovadi.github.io/ekologi-untan-app/
     </footer>
 </body>
 </html>
