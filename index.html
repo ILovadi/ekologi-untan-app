@@ -77,11 +77,11 @@
     <header>
         <img src="logo.png" alt="" />
         <h1>Ekologi-Untan app</h1>
-        <p>Aplikasi untuk kalkulasi Indeks Shannon-Wiener, Indeks Simpson, Indeks Kemerataan Pielou, dan uji t-Hutchinson.</p>
+        <p>Aplikasi untuk kalkulasi Indeks Shannon-Wiener (H'), Indeks Simpson (1-D), Indeks Brillouin (HB), Indeks Kemerataan Pielou (J'), dan uji t-Hutchinson.</p>
     </header>
 
     <section>
-        <label for="data1">Masukkan data keanekaragaman jenis (contoh format: jumlah individu tiap jenis dipisah koma, misal:<br> 10,5,8,12,15)</label>
+        <label for="data1">Masukkan data jumlah individu dari setiap jenis (contoh format: jumlah individu setiap jenis dipisah koma, misal:<br> 7,5,15,11,18)</label>
         <textarea id="data1" placeholder="Masukkan data komunitas 1"></textarea>
 
         <label for="data2">Untuk uji t-Hutchinson, masukkan data komunitas ke-2 (format sama), kosongkan jika tidak digunakan:</label>
@@ -192,14 +192,16 @@
 
             // Hitung indeks untuk komunitas 1
             const H1 = indeksShannonWiener(arr1);
+            const D1 = indeksDominansiSimpson(arr1);  // Indeks Dominansi
+            const B1 = indeksBrillouin(arr1);         // Indeks Brillouin
             const S1 = arr1.length;
-            const D1 = indeksSimpson(arr1);
             const J1 = indeksKemerataan(arr1);
 
             let hasilHTML = `<h3>Hasil Kalkulasi Komunitas 1</h3>`;
             hasilHTML += `<ul>
                 <li>Indeks Shannon-Wiener (H'): <b>${formatNumber(H1)}</b></li>
-                <li>Indeks Simpson (1 - D): <b>${formatNumber(D1)}</b></li>
+                <li>Indeks Dominansi Simpson (D): <b>${formatNumber(D1)}</b></li>
+                <li>Indeks Brillouin (B): <b>${formatNumber(B1)}</b></li>
                 <li>Indeks Kemerataan Pielou (J'): <b>${formatNumber(J1)}</b></li>
                 <li>Jumlah Jenis (S): <b>${S1}</b></li>
             </ul>`;
@@ -211,10 +213,11 @@
                 const D2 = indeksSimpson(arr2);
                 const J2 = indeksKemerataan(arr2);
 
-                hasilHTML += `<h3>Hasil Kalkulasi Komunitas 2</h3>`;
+               hasilHTML += `<h3>Hasil Kalkulasi Komunitas 2</h3>`;
                 hasilHTML += `<ul>
                     <li>Indeks Shannon-Wiener (H'): <b>${formatNumber(H2)}</b></li>
-                    <li>Indeks Simpson (1 - D): <b>${formatNumber(D2)}</b></li>
+                    <li>Indeks Dominansi Simpson (D): <b>${formatNumber(D2)}</b></li>
+                    <li>Indeks Brillouin (B): <b>${formatNumber(B2)}</b></li>
                     <li>Indeks Kemerataan Pielou (J'): <b>${formatNumber(J2)}</b></li>
                     <li>Jumlah Jenis (S): <b>${S2}</b></li>
                 </ul>`;
